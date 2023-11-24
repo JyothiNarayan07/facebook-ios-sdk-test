@@ -195,6 +195,7 @@ static BOOL g_explicitEventsLoggedYet = NO;
 
 - (void)logEvent:(FBSDKAppEventName)eventName
 {
+    NSLog(@"**********Start");
   [self logEvent:eventName parameters:@{}];
 }
 
@@ -209,6 +210,7 @@ static BOOL g_explicitEventsLoggedYet = NO;
 - (void)logEvent:(FBSDKAppEventName)eventName
       parameters:(nullable NSDictionary<FBSDKAppEventParameterName, id> *)parameters
 {
+    NSLog(@"**********Start2");
   [self logEvent:eventName
       valueToSum:nil
       parameters:parameters
@@ -230,6 +232,7 @@ static BOOL g_explicitEventsLoggedYet = NO;
       parameters:(nullable NSDictionary<FBSDKAppEventParameterName, id> *)parameters
      accessToken:(FBSDKAccessToken *)accessToken
 {
+    NSLog(@"**********Star3");
   [self logEvent:eventName
            valueToSum:valueToSum
            parameters:parameters
@@ -1039,7 +1042,9 @@ static BOOL g_explicitEventsLoggedYet = NO;
   isImplicitlyLogged:(BOOL)isImplicitlyLogged
          accessToken:(FBSDKAccessToken *)accessToken
 {
+    NSLog(@"**********Start3");
   [self validateConfiguration];
+    NSLog(@"**********Start4");
 
   // Kill events if kill-switch is enabled
   if (!self.gateKeeperManager) {
@@ -1053,6 +1058,7 @@ static BOOL g_explicitEventsLoggedYet = NO;
                            logEntry:message];
     return;
   }
+    NSLog(@"**********Start5");
 #if !TARGET_OS_TV
   // Update conversion value for SKAdNetwork if needed
   [self.featureChecker checkFeature:FBSDKFeatureSKAdNetworkV4 completionBlock:^(BOOL enabled) {
@@ -1075,48 +1081,59 @@ static BOOL g_explicitEventsLoggedYet = NO;
                                    value:valueToSum
                               parameters:parameters];
 #endif
+    NSLog(@"**********Start6");
 
   if (self.appEventsUtility.shouldDropAppEvents) {
     return;
   }
+    NSLog(@"**********Start7");
 
   if (isImplicitlyLogged && self.serverConfiguration && !self.serverConfiguration.isImplicitLoggingSupported) {
     return;
   }
-  
+    NSLog(@"**********Start8");
+
   if (self.macaRuleMatchingManager) {
     @try {
         parameters = [self.macaRuleMatchingManager processParameters:parameters event:eventName?:@""];
     } @catch(NSException *exception) {}
   }
+    NSLog(@"**********Start9");
 
   if (!isImplicitlyLogged && !g_explicitEventsLoggedYet) {
     g_explicitEventsLoggedYet = YES;
   }
+    NSLog(@"**********Start10");
   __block BOOL failed = ![self.appEventsUtility validateIdentifier:eventName];
 
   // Make sure parameter dictionary is well formed.  Log and exit if not.
   [FBSDKTypeUtility dictionary:parameters enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
     if (![key isKindOfClass:NSString.class]) {
       [self.appEventsUtility logAndNotify:[NSString stringWithFormat:@"The keys in the parameters must be NSStrings, '%@' is not.", key]];
+        NSLog(@"**********Start11");
       failed = YES;
     }
     if (![self.appEventsUtility validateIdentifier:key]) {
+        NSLog(@"**********Start12");
       failed = YES;
     }
     if (![obj isKindOfClass:NSString.class] && ![obj isKindOfClass:NSNumber.class]) {
       [self.appEventsUtility logAndNotify:[NSString stringWithFormat:@"The values in the parameters dictionary must be NSStrings or NSNumbers, '%@' is not.", obj]];
+        NSLog(@"**********Start13");
       failed = YES;
     }
   }];
+    NSLog(@"**********Start14");
 
   if (failed) {
+      NSLog(@"**********Start15");
     return;
   }
   // Filter out deactivated params
   if (self.eventDeactivationParameterProcessor) {
     parameters = [self.eventDeactivationParameterProcessor processParameters:parameters eventName:eventName];
   }
+    NSLog(@"**********Start16");
 
 #if !TARGET_OS_TV
   // Filter out restrictive data with on-device ML
@@ -1131,9 +1148,12 @@ static BOOL g_explicitEventsLoggedYet = NO;
   if (self.protectedModeManager) {
     @try {
         parameters = [self.protectedModeManager processParameters:parameters eventName:eventName];
-    } @catch(NSException *exception) {}
+    } @catch(NSException *exception) {
+        NSLog(@"**********Start17");
+    }
   }
-  
+    NSLog(@"**********Start18");
+
   NSMutableDictionary<FBSDKAppEventParameterName, id> *eventDictionary = [NSMutableDictionary dictionaryWithDictionary:parameters ?: @{}];
   [FBSDKTypeUtility dictionary:eventDictionary setObject:eventName forKey:FBSDKAppEventParameterNameEventName];
   if (!eventDictionary[FBSDKAppEventParameterNameLogTime]) {
@@ -1190,12 +1210,14 @@ static BOOL g_explicitEventsLoggedYet = NO;
 
     [self.appEventsState addEvent:eventDictionary isImplicit:isImplicitlyLogged];
     if (!isImplicitlyLogged) {
+        NSLog(@"**********Start19");
       NSString *message = [NSString stringWithFormat:@"FBSDKAppEvents: Recording event @ %f: %@",
                            [self.appEventsUtility unixTimeNow],
                            eventDictionary];
       [self.logger singleShotLogEntry:FBSDKLoggingBehaviorAppEvents
                              logEntry:message];
     }
+      NSLog(@"**********Start20");
 
     [self checkPersistedEvents];
     
